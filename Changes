@@ -1,0 +1,28 @@
+Revision history for Tie::DBD
+
+0.05	10 Aug 2010 - H.Merijn Brand
+
+    - More speed
+    - Make Unify work
+
+0.04	09 Aug 2010 - H.Merijn Brand
+
+    - Documentation
+    - Raise Oracle BLOB read length
+    - Implement and test persistence
+
+0.03	09 Aug 2010 - H.Merijn Brand
+
+    - Documentation
+    - Make Oracle work (with restrictions)
+    - Implement streaming (persistence)
+
+0.02	05 Aug 2010 - H.Merijn Brand
+
+    - Documentation
+    - More database support
+    - Tests for each database
+
+0.01	04 Aug 2010 - H.Merijn Brand
+
+    - Initial release
