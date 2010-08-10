@@ -12,7 +12,7 @@ sub dsn
     $type eq "CSV"	and return "dbi:CSV:f_ext=.csv/r;csv_null=1";
 
     if ($type eq "Oracle") {
-	my @id = split m{/} => ($ENV{ORACLE_USERID} || "/");
+	my @id = split m{/} => ($ENV{ORACLE_USERID} || "/"), -1;
 	$ENV{DBI_USER} = $id[0];
 	$ENV{DBI_PASS} = $id[1];
 
