@@ -1,4 +1,4 @@
-package Tie::Hash::DBD;
+package Tie::Array::DBD;
 
 our $VERSION = "0.07";
 
@@ -13,42 +13,36 @@ use Storable qw( freeze thaw );
 my $dbdx = 0;
 
 my %DB = (
-    # k_asc is needed if h_key mush be converted to hex because
-    #       where clause is not permitted on binary/BLOB/...
     Pg		=> {
 	temp	=> "temp",
-	t_key	=> "bytea primary key",
+	t_key	=> "bigint not null primary key",
 	t_val	=> "bytea",
 	clear	=> "truncate table",
 	autoc	=> 0,
 	},
     Unify	=> {
 	temp	=> "",
-	t_key	=> "text",
+	t_key	=> "numeric (9) not null primary key",
 	t_val	=> "binary",
 	clear	=> "delete from",
-	k_asc	=> 1,
 	},
     Oracle	=> {
-	# Oracle does not allow where clauses on BLOB's nor does it allow
-	# BLOB's to be primary keys
 	temp	=> "global temporary",	# Only as of Ora-9
-	t_key	=> "varchar2 (4000) primary key",
+	t_key	=> "number (38) not null primary key",
 	t_val	=> "blob",
 	clear	=> "truncate table",
 	autoc	=> 0,
-	k_asc	=> 1,
 	},
     mysql	=> {
 	temp	=> "temporary",
-	t_key	=> "blob",	# Does not allow binary to be primary key
+	t_key	=> "bigint not null primary key",
 	t_val	=> "blob",
 	clear	=> "truncate table",
 	autoc	=> 0,
 	},
     SQLite	=> {
 	temp	=> "temporary",
-	t_key	=> "text primary key",
+	t_key	=> "integer not null primary key",
 	t_val	=> "text",
 	clear	=> "delete from",
 	pbind	=> 0, # TYPEs in SQLite are text, bind_param () needs int
@@ -56,7 +50,7 @@ my %DB = (
 	},
     CSV		=> {
 	temp	=> "temporary",
-	t_key	=> "text primary key",
+	t_key	=> "integer not null primary key",
 	t_val	=> "text",
 	clear	=> "delete from",
 	},
@@ -91,10 +85,10 @@ sub _create_table
     $dbt eq "Unify" and $dbh->commit;
     } # create table
 
-sub TIEHASH
+sub TIEARRAY
 {
     my $pkg = shift;
-    my $usg = qq{usage: tie %h, "$pkg", \$dbh [, { tbl => "tbl", key => "f_key", fld => "f_value" }];};
+    my $usg = qq{usage: tie \@a, "$pkg", \$dbh [, { tbl => "tbl", key => "f_key", fld => "f_value" }];};
     my $dsn = shift or croak $usg;
     my $opt = shift;
 
@@ -123,7 +117,6 @@ sub TIEHASH
 	tbl => undef,
 	tmp => $tmp,
 	str => undef,
-	asc => $cnf->{k_asc} || 0,
 	};
 
     if ($opt) {
@@ -140,9 +133,10 @@ sub TIEHASH
 
     unless ($h->{tbl}) {	# Create a temporary table
 	$tmp = ++$dbdx;
-	$h->{tbl} = "t_tie_dbdh_$$" . "_$tmp";
+	$h->{tbl} = "t_tie_dbda_$$" . "_$tmp";
 	}
     _create_table ($h, $tmp);
+    _setmax ($h);
 
     my $tbl = $h->{tbl};
 
@@ -152,6 +146,7 @@ sub TIEHASH
     $h->{sel} = $dbh->prepare ("select $f_v from $tbl where $f_k = ?");
     $h->{cnt} = $dbh->prepare ("select count(*) from $tbl");
     $h->{ctv} = $dbh->prepare ("select count(*) from $tbl where $f_k = ?");
+    $h->{uky} = $dbh->prepare ("update $tbl set $f_k = ? where $f_k = ?");
 
     unless (exists $cnf->{pbind} && !$cnf->{pbind}) {
 	my $sth = $dbh->prepare ("select $f_k, $f_v from $tbl");
@@ -165,10 +160,12 @@ sub TIEHASH
 	$h->{upd}->bind_param (2, undef, $typ[0]);
 	$h->{sel}->bind_param (1, undef, $typ[0]);
 	$h->{ctv}->bind_param (1, undef, $typ[0]);
+	$h->{uky}->bind_param (1, undef, $typ[0]);
+	$h->{uky}->bind_param (2, undef, $typ[0]);
 	}
 
     bless $h, $pkg;
-    } # TIEHASH
+    } # TIEARRAY
 
 sub _stream
 {
@@ -188,36 +185,59 @@ sub _unstream
     $self->{str} eq "Storable" and return thaw ($val)->{val};
     } # _unstream
 
+sub _setmax
+{
+    my $self = shift;
+    my $sth = $self->{dbh}->prepare ("select max($self->{f_k}) from $self->{tbl}");
+    $sth->execute;
+    if (my $r = $sth->fetch) {
+	$self->{max} = defined $r->[0] ? $r->[0] : -1;
+	}
+    else {
+	$self->{max} = -1;
+	}
+    $self->{max};
+    } # _setmax
+
 sub STORE
 {
     my ($self, $key, $value) = @_;
-    my $k = $self->{asc} ? unpack "H*", $key : $key;
     my $v = $self->_stream ($value);
     $self->EXISTS ($key)
-	? $self->{upd}->execute ($v, $k)
-	: $self->{ins}->execute ($k, $v);
+	? $self->{upd}->execute ($v, $key)
+	: $self->{ins}->execute ($key, $v);
+    $key > $self->{max} and $self->{max} = $key;
     } # STORE
 
 sub DELETE
 {
     my ($self, $key) = @_;
-    $self->{asc} and $key = unpack "H*", $key;
     $self->{sel}->execute ($key);
     my $r = $self->{sel}->fetch or return;
     $self->{del}->execute ($key);
+    $key >= $self->{max} and $self->_setmax;
     $self->_unstream ($r->[0]);
     } # DELETE
+
+sub STORESIZE
+{
+    my ($self, $size) = @_; # $size = $# + 1
+    $size--;
+    $self->{dbh}->do ("delete from $self->{tbl} where $self->{f_k} > $size");
+    $self->{max} = $size;
+    } # STORESIZE
 
 sub CLEAR
 {
     my $self = shift;
     $self->{dbh}->do ("$DB{$self->{dbt}}{clear} $self->{tbl}");
+    $self->{max} = -1;
     } # CLEAR
 
 sub EXISTS
 {
     my ($self, $key) = @_;
-    $self->{asc} and $key = unpack "H*", $key;
+    $key <= $self->{max} or return 0;
     $self->{sel}->execute ($key);
     return $self->{sel}->fetch ? 1 : 0;
     } # EXISTS
@@ -225,37 +245,153 @@ sub EXISTS
 sub FETCH
 {
     my ($self, $key) = @_;
-    $self->{asc} and $key = unpack "H*", $key;
+    $key <= $self->{max} or return undef;
     $self->{sel}->execute ($key);
     my $r = $self->{sel}->fetch or return;
     $self->_unstream ($r->[0]);
     } # STORE
 
+sub PUSH
+{
+    my ($self, @val) = @_;
+    for (@val) {
+	$self->STORE (++$self->{max}, $_);
+	}
+    return $self->FETCHSIZE;
+    } # PUSH
+
+sub POP
+{
+    my $self = shift;
+    $self->{max} >= 0 or return;
+    $self->DELETE ($self->{max});
+    } # POP
+
+sub SHIFT
+{
+    my $self = shift;
+    my $val  = $self->DELETE (0);
+    $self->{uky}->execute ($_ - 1, $_) for 1 .. $self->{max};
+    $self->{max}--;
+    return $val;
+    } # SHIFT
+
+sub UNSHIFT
+{
+    my ($self, @val) = @_;
+    @val or return;
+    my $incr = scalar @val;
+    $self->{uky}->execute ($_ + $incr, $_) for reverse 0 .. $self->{max};
+    $self->{max} += $incr;
+    $self->STORE ($_, $val[$_]) for 0 .. $#val;
+    return $self->FETCHSIZE;
+    } # UNSHIFT
+
+# splice ARRAY, OFFSET, LENGTH, LIST
+# splice ARRAY, OFFSET, LENGTH
+# splice ARRAY, OFFSET
+# splice ARRAY
+#
+#   Removes the elements designated by OFFSET and LENGTH from an array, and
+#   replaces them with the elements of LIST, if any.
+#
+#   In list   context, returns the elements removed from the array.
+#   In scalar context, returns the last element removed, or "undef" if
+#    no elements are removed.
+#
+#   The array grows or shrinks as necessary.
+#
+#   If OFFSET is negative then it starts that far from the end of the array.
+#   If LENGTH is omitted, removes everything from OFFSET onward.
+#   If LENGTH is negative, removes the elements from OFFSET onward except for
+#     -LENGTH elements at the end of the array.
+#   If both OFFSET and LENGTH are omitted, removes everything.
+#   If OFFSET is past the end of the array, Perl issues a warning, and splices
+#     at the end of the array.
+
+sub SPLICE
+{
+    my $nargs = $#_;
+    my ($self, $off, $len, @new, @val) = @_;
+
+    # splice @array;
+    if ($nargs == 0) {
+	if (wantarray) {
+	    @val = map { $self->FETCH ($_) } 0 .. $self->{max};
+	    $self->CLEAR;
+	    return @val;
+	    }
+	$val[0] = $self->FETCH ($self->{max});
+	$self->CLEAR;
+	return $val[0];
+	}
+
+    # Take care of negative offset, count from tail
+    $off < 0 and $off = $self->{max} + 1 + $off;
+    $off < 0 and
+	croak "Modification of non-creatable array value attempted, subscript $_[1]";
+
+    # splice @array, off;
+    if ($nargs == 1) {
+	$off > $self->{max} and return;
+
+	if (wantarray) {
+	    @val = map { $self->FETCH ($_) } $off .. $self->{max};
+	    $self->STORESIZE ($off);
+	    return @val;
+	    }
+	$val[0] = $self->FETCH ($self->{max});
+	$self->STORESIZE ($off);
+	return $val[0];
+	}
+
+    # splice @array, off, len;
+    $nargs == 2 && $off  > $self->{max} and return;
+
+    my $last = $len < 0 ? $self->{max} + $len : $off + $len - 1;
+    $nargs == 2 && $last > $self->{max} and return $self->SPLICE ($off);
+
+    @val = map { $self->DELETE ($_) } $off .. $last;
+    $len = @val;
+    $self->{uky}->execute ($_ - $len, $_) for ($last + 1) .. $self->{max};
+    $self->{max} -= $len;
+
+    # splice @array, off, len, replacement-list;
+    if (@new) {
+	my $new = @new;
+	$self->{uky}->execute ($_ + $new, $_) for reverse $off .. $self->{max};
+	$self->STORE ($off + $_, $new[$_]) for 0..$#new;
+	$self->{max} += $new;
+	}
+
+    return wantarray ? @val : $val[-1];
+    } # SPLICE
+
 sub FIRSTKEY
 {
     my $self = shift;
-    $self->{key} = $self->{dbh}->selectcol_arrayref ("select $self->{f_k} from $self->{tbl}");
-    @{$self->{key}} or return;
-    if ($self->{asc}) {
-	 $_ = pack "H*", $_ for @{$self->{key}};
-	 }
-    pop @{$self->{key}};
+    $self->{max} >= 0 or return;
+    $self->{min} = 0;
     } # FIRSTKEY
 
 sub NEXTKEY
 {
     my $self = shift;
-    @{$self->{key}} or return;
-    pop @{$self->{key}};
+    exists $self->{min} && $self->{min} < $self->{max} and return ++$self->{min};
+    delete $self->{min};
+    return;
     } # FIRSTKEY
 
-sub SCALAR
+sub FETCHSIZE
 {
     my $self = shift;
-    $self->{cnt}->execute;
-    my $r = $self->{cnt}->fetch or return 0;
-    $r->[0];
-    } # SCALAR
+    return $self->{max} + 1;
+    } # FETCHSIZE
+
+sub EXTEND
+{
+    # no-op
+    } # EXTEND
 
 sub drop
 {
@@ -263,11 +399,22 @@ sub drop
     $self->{tmp} = 1;
     } # drop
 
+sub _dump_table
+{
+    my $self = shift;
+    my $sth = $self->{dbh}->prepare ("select $self->{f_k}, $self->{f_v} from $self->{tbl} order by $self->{f_k}");
+    $sth->execute;
+    $sth->bind_columns (\my ($k, $v));
+    while ($sth->fetch) {
+	printf STDERR "%6d: '%s'\n", $k, $self->_unstream ($v);
+	}
+    } # _dump_table
+
 sub DESTROY
 {
     my $self = shift;
     my $dbh = $self->{dbh} or return;
-    for (qw( sel ins upd del cnt ctv )) {
+    for (qw( sel ins upd del cnt ctv uky )) {
 	$self->{$_} or next;
 	$self->{$_}->finish;
 	undef $self->{$_}; # DESTROY handle
@@ -290,42 +437,46 @@ __END__
 
 =head1 NAME
 
-Tie::Hash::DBD, tie a plain hash to a database table
+Tie::Array::DBD, tie a plain array to a database table
 
 =head1 SYNOPSIS
 
   use DBI;
-  use Tie::Hash::DBD;
+  use Tie::Array::DBD;
 
   my $dbh = DBI->connect ("dbi:Pg:", ...);
 
-  tie my %hash, "Tie::Hash::DBD", "dbi:SQLite:dbname=db.tie";
-  tie my %hash, "Tie::Hash::DBD", $dbh;
-  tie my %hash, "Tie::Hash::DBD", $dbh, {
+  tie my @array, "Tie::Array::DBD", "dbi:SQLite:dbname=db.tie";
+  tie my @array, "Tie::Array::DBD", $dbh;
+  tie my @array, "Tie::Array::DBD", $dbh, {
       tbl => "t_tie_analysis",
       key => "h_key",
       fld => "h_value",
       str => "Storable,
       };
 
-  $hash{key} = $value;  # INSERT
-  $hash{key} = 3;       # UPDATE
-  delete $hash{key};    # DELETE
-  $value = $hash{key};  # SELECT
-  %hash = ();           # CLEAR
+  $array[42] = $value;  # INSERT
+  $array[42] = 3;       # UPDATE
+  delete $array[42];    # DELETE
+  $value = $array[42];  # SELECT
+  @array = ();          # CLEAR
+
+  @array = (1..42);
+  $array[-2] = 42;
+  $_ = pop @array;
+  push @array, $_;
+  $_ = shift @array;
+  unshift @array, $_;
+  @a = splice @array, 2, -2, 5..9;
+  @k = keys   @array;   # $] >= 5.011
+  @v = values @array;   # $] >= 5.011
 
 =head1 DESCRIPTION
 
-This module has been created to act as a drop-in replacement for modules
-that tie straight perl hashes to disk, like C<DB_File>. When the running
-system does not have enough memory to hold large hashes, and disk-tieing
-won't work because there is not enough space, it works quite well to tie
-the hash to a database, which preferable runs on a different server.
-
-This module ties a hash to a database table using B<only> a C<key> and a
-C<value> field. If no tables specification is passed, this will create a
-temporary table with C<h_key> for the key field and a C<h_value> for the
-value field.
+This module ties an array to a database table using B<only> an C<index>
+and a C<value> field. If no tables specification is passed, this will
+create a temporary table with C<h_key> for the key field and a C<h_value>
+for the value field.
 
 I think it would make sense  to merge the functionality that this module
 provides into C<Tie::DBI>.
@@ -364,7 +515,7 @@ options. The following options are recognized:
 =item tbl
 
 Defines the name of the table to be used. If none is passed, a new table
-is created with a unique name like C<t_tie_dbdh_42253_1>. When possible,
+is created with a unique name like C<t_tie_dbda_42253_1>. When possible,
 the table is created as I<temporary>. After the session, this table will
 be dropped.
 
@@ -391,14 +542,14 @@ of C<Storable>. The default is undefined.
 Note that C<Storable> does not support persistence of perl types C<CODE>, 
 C<REGEXP>, C<IO>, C<FORMAT>, and C<GLOB>.
 
-If you want to preserve Encoding on the hash values, you should use this
+If you want to preserve Encoding on the array values, you should use this
 feature.
 
 =back
 
 =head2 Encoding
 
-C<Tie::Hash::DBD> stores keys and values as binary data. This means that
+C<Tie::Array::DBD> stores values as binary data. This means that
 all Encoding and magic is lost when the data is stored, and thus is also
 not available when the data is restored,  hence all internal information
 about the data is also lost, which includes the C<UTF8> flag.
@@ -406,15 +557,15 @@ about the data is also lost, which includes the C<UTF8> flag.
 If you want to preserve the C<UTF8> flag you will need to store internal
 flags and use the streamer option:
 
-  tie my %hash, "Tie::Hash::DBD", { str => "Storable" };
+  tie my @array, "Tie::Array::DBD", { str => "Storable" };
 
 =head2 Nesting and deep structures
 
-C<Tie::Hash::DBD> stores keys and values as binary data. This means that
+C<Tie::Array::DBD> stores values as binary data. This means that
 all structure is lost when the data is stored and not available when the
 data is restored. To maintain deep structures, use the streamer option:
 
-  tie my %hash, "Tie::Hash::DBD", { str => "Storable" };
+  tie my @array, "Tie::Array::DBD", { str => "Storable" };
 
 =head1 METHODS
 
@@ -422,9 +573,9 @@ data is restored. To maintain deep structures, use the streamer option:
 
 If a table was used with persistence, the table will not be dropped when
 the C<untie> is called.  Dropping can be forced using the C<drop> method
-at any moment while the hash is tied:
+at any moment while the array is tied:
 
-  (tied %hash)->drop;
+  (tied @array)->drop;
 
 =head1 PREREQUISITES
 
@@ -439,14 +590,8 @@ to use recent Modules.  DBD::SQLite for example seems to require version
 
 =item *
 
-As Oracle does not allow BLOB, CLOB or LONG to be indexed or selected on,
-the keys will be converted to ASCII for Oracle. The maximum length for a
-converted key in Oracle is 4000 characters. The fact that the key has to
-be converted to ASCII representation,  also excludes C<undef> as a valid
-key value.
-
 C<DBD::Oracle> limits the size of BLOB-reads to 4kb by default, which is
-too small for reasonable data structures.  Tie::Hash::DBD locally raises
+too small for reasonable data structures. Tie::Array::DBD locally raises
 this value to 4Mb, which is still an arbitrary limit.
 
 =item *
@@ -487,7 +632,7 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-DBI, Tie::DBI, Tie::Hash
+DBI, Tie::DBI, Tie::Hash, Tie::Hash::DBD
 
 =cut
 

@@ -6,13 +6,11 @@ Tie::Hash::DBD - tie a hash to a database
 
     use Tie::Hash::DBD;
 
-    tie my %hash, "Tie::DBD", $dbh [, { options }];
+    tie my %hash, "Tie::Hash::DBD",   $dbh [, \%options ];
 
-    $hash{key} = $value;  # INSERT
-    $hash{key} = 3;       # UPDATE
-    delete $hash{key};    # DELETE
-    $value = $hash{key};  # SELECT
-    %hash = ();           # CLEAR
+    use Tie::Array::DBD;
+
+    tie my @array, "Tie::Array::DBD", $dbh [, \%options ];
 
 =head1 COPYING
 

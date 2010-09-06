@@ -40,7 +40,7 @@ is_deeply (\%hash, {},			"Empty");
 
 untie %hash;
 
-tie %hash, "Tie::Hash::DBD", dsn ($DBD), { tbl => $tbl };
+tie %hash, "Tie::Hash::DBD", _dsn ($DBD), { tbl => $tbl };
 
 ok (tied %hash,				"Hash re-tied");
 

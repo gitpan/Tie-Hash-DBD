@@ -23,15 +23,19 @@ unless (tied %hash) {
 ok (tied %hash,						"Hash tied");
 
 # insert
-ok ($hash{c1} = 1,					"c1 = 1");
-ok ($hash{c2} = 1,					"c2 = 1");
-ok ($hash{c3} = 3,					"c3 = 3");
+ok ($hash{c1} = 1,					"c1 =  1");
+is ($hash{c1},  1,					"c1 == 1");
+ok ($hash{c2} = 1,					"c2 =  1");
+is ($hash{c2},  1,					"c2 == 1");
+ok ($hash{c3} = 3,					"c3 =  3");
+is ($hash{c3},  3,					"c3 == 3");
 
 ok ( exists $hash{c1},					"Exists c1");
 ok (!exists $hash{c4},					"Exists c4");
 
 # update
-ok ($hash{c2} = 2,					"c2 = 2");
+ok ($hash{c2} = 2,					"c2 =  2");
+is ($hash{c2},  2,					"c2 == 2");
 
 # delete
 is (delete ($hash{c3}), 3,				"Delete c3");
@@ -51,8 +55,11 @@ is (scalar %hash, 2,					"Scalar");
 # Binary data
 my $anr = pack "sss", 102, 102, 025;
 ok ($hash{c4} = $anr,					"Binary value");
+is ($hash{c4},  $anr,					"Binary value");
 ok ($hash{$anr} = 42,					"Binary key");
+is ($hash{$anr},  42,					"Binary key");
 ok ($hash{$anr} = $anr,					"Binary key and value");
+is ($hash{$anr},  $anr,					"Binary key and value");
 
 # clear
 %hash = ();

@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-sub dsn
+sub _dsn
 {
     my $type = shift;
 
@@ -35,6 +35,14 @@ sub dsn
 	    plan skip_all => "Not a testable Unify env";
 	return "dbi:Unify:";
 	}
+    } # _dsn
+
+sub dsn
+{
+    my $type = shift;
+    my $dsn  = _dsn ($type);
+    cleanup ($type);
+    return $dsn;
     } # dsn
 
 sub cleanup

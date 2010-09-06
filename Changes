@@ -1,5 +1,10 @@
 Revision history for Tie::DBD
 
+0.07	06 Sep 2010 - H.Merijn Brand
+
+    - More tests
+    - Implementation of Tie::Array::DBD
+
 0.06	10 Aug 2010 - H.Merijn Brand
 
     - Shorten skip messages for failing DBD's
