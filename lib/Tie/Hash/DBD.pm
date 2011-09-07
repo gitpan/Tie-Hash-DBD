@@ -1,6 +1,6 @@
 package Tie::Hash::DBD;
 
-our $VERSION = "0.07";
+our $VERSION = "0.09";
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use warnings;
 use Carp;
 
 use DBI;
-use Storable qw( freeze thaw );
+use Storable qw( nfreeze thaw );
 
 my $dbdx = 0;
 
@@ -124,6 +124,7 @@ sub TIEHASH
 	tmp => $tmp,
 	str => undef,
 	asc => $cnf->{k_asc} || 0,
+	trh => 0,
 	};
 
     if ($opt) {
@@ -133,12 +134,17 @@ sub TIEHASH
 	$opt->{fld} and $f_v      = $opt->{fld};
 	$opt->{tbl} and $h->{tbl} = $opt->{tbl};
 	$opt->{str} and $h->{str} = $opt->{str};
+	$opt->{trh} and $h->{trh} = $opt->{trh};
 	}
 
     $h->{f_k} = $f_k;
     $h->{f_v} = $f_v;
+    $h->{trh} and $dbh->{AutoCommit} = 0;
 
-    unless ($h->{tbl}) {	# Create a temporary table
+    if ($h->{tbl}) {		# Used told the table name
+	$dbh->{AutoCommit} = 1 unless $h->{trh} || $dbt eq "CSV" || $dbt eq "Unify";
+	}
+    else {			# Create a temporary table
 	$tmp = ++$dbdx;
 	$h->{tbl} = "t_tie_dbdh_$$" . "_$tmp";
 	}
@@ -176,7 +182,7 @@ sub _stream
     defined $val or return undef;
     $self->{str} or return $val;
 
-    $self->{str} eq "Storable" and return freeze ({ val => $val });
+    $self->{str} eq "Storable" and return nfreeze ({ val => $val });
     } # _stream
 
 sub _unstream
@@ -193,18 +199,28 @@ sub STORE
     my ($self, $key, $value) = @_;
     my $k = $self->{asc} ? unpack "H*", $key : $key;
     my $v = $self->_stream ($value);
-    $self->EXISTS ($key)
+    $self->{trh} and $self->{dbh}->begin_work;
+    my $r = $self->EXISTS ($key)
 	? $self->{upd}->execute ($v, $k)
 	: $self->{ins}->execute ($k, $v);
+    $self->{trh} and $self->{dbh}->commit;
+    $r;
     } # STORE
 
 sub DELETE
 {
     my ($self, $key) = @_;
     $self->{asc} and $key = unpack "H*", $key;
+    $self->{trh} and $self->{dbh}->begin_work;
     $self->{sel}->execute ($key);
-    my $r = $self->{sel}->fetch or return;
+    my $r = $self->{sel}->fetch;
+    unless ($r) {
+	$self->{trh} and $self->{dbh}->rollback;
+	return;
+	}
+
     $self->{del}->execute ($key);
+    $self->{trh} and $self->{dbh}->commit;
     $self->_unstream ($r->[0]);
     } # DELETE
 
@@ -234,8 +250,13 @@ sub FETCH
 sub FIRSTKEY
 {
     my $self = shift;
+    $self->{trh} and $self->{dbh}->begin_work;
     $self->{key} = $self->{dbh}->selectcol_arrayref ("select $self->{f_k} from $self->{tbl}");
-    @{$self->{key}} or return;
+    $self->{trh} and $self->{dbh}->commit;
+    unless (@{$self->{key}}) {
+	$self->{trh} and $self->{dbh}->commit;
+	return;
+	}
     if ($self->{asc}) {
 	 $_ = pack "H*", $_ for @{$self->{key}};
 	 }
@@ -245,7 +266,10 @@ sub FIRSTKEY
 sub NEXTKEY
 {
     my $self = shift;
-    @{$self->{key}} or return;
+    unless (@{$self->{key}}) {
+	$self->{trh} and $self->{dbh}->commit;
+	return;
+	}
     pop @{$self->{key}};
     } # FIRSTKEY
 
@@ -305,7 +329,8 @@ Tie::Hash::DBD, tie a plain hash to a database table
       tbl => "t_tie_analysis",
       key => "h_key",
       fld => "h_value",
-      str => "Storable,
+      str => "Storable",
+      trh => 0,
       };
 
   $hash{key} = $value;  # INSERT
@@ -373,6 +398,9 @@ it will be used with the specified C<key> and C<fld>.  Otherwise it will
 be created with C<key> and <fld>,  but it will not be dropped at the end
 of the session.
 
+If a table name is provided, C<AutoCommit> will be "On" for persistence,
+unless you provide a true C<trh> attribute.
+
 =item key
 
 Defines the name of the key field in the database table.  The default is
@@ -393,6 +421,13 @@ C<REGEXP>, C<IO>, C<FORMAT>, and C<GLOB>.
 
 If you want to preserve Encoding on the hash values, you should use this
 feature.
+
+=item trh
+
+Use transaction Handles. By default none of the operations is guarded by
+transaction handling for speed reasons. Set C<trh> to a true value cause
+all actions to be surrounded by  C<begin_work> and C<commit>.  Note that
+this may have a big impact on speed.
 
 =back
 
@@ -456,6 +491,10 @@ C<CODE>, C<FORMAT>, and C<GLOB>.  Future extensions might implement some
 alternative streaming modules, like C<Data::Dump::Streamer> or use mixin
 approaches that enable you to fit in your own.
 
+=item *
+
+Note that neither DBD::CSV nor DBD::Unify support C<AutoCommit>.
+
 =back
 
 =head1 TODO
@@ -480,14 +519,14 @@ H.Merijn Brand <h.m.brand@xs4all.nl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010-2010 H.Merijn Brand
+Copyright (C) 2010-2011 H.Merijn Brand
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 
 
 =head1 SEE ALSO
 
-DBI, Tie::DBI, Tie::Hash
+DBI, Tie::DBI, Tie::Hash, Redis::Hash
 
 =cut
 

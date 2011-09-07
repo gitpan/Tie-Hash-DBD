@@ -1,6 +1,6 @@
 package Tie::Array::DBD;
 
-our $VERSION = "0.07";
+our $VERSION = "0.09";
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use warnings;
 use Carp;
 
 use DBI;
-use Storable qw( freeze thaw );
+use Storable qw( nfreeze thaw );
 
 my $dbdx = 0;
 
@@ -173,7 +173,7 @@ sub _stream
     defined $val or return undef;
     $self->{str} or return $val;
 
-    $self->{str} eq "Storable" and return freeze ({ val => $val });
+    $self->{str} eq "Storable" and return nfreeze ({ val => $val });
     } # _stream
 
 sub _unstream
@@ -452,7 +452,7 @@ Tie::Array::DBD, tie a plain array to a database table
       tbl => "t_tie_analysis",
       key => "h_key",
       fld => "h_value",
-      str => "Storable,
+      str => "Storable",
       };
 
   $array[42] = $value;  # INSERT
@@ -625,7 +625,7 @@ H.Merijn Brand <h.m.brand@xs4all.nl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010-2010 H.Merijn Brand
+Copyright (C) 2010-2011 H.Merijn Brand
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 
