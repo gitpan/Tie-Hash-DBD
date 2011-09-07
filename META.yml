@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                    Tie-Hash-DBD
-version:                 0.09
+version:                 0.10
 abstract:                Tie plain hashes to DBI interface
 license:                 perl
 author:              
@@ -10,10 +10,10 @@ distribution_type:       module
 provides:
     Tie::Hash::DBD:
         file:            lib/Tie/Hash/DBD.pm
-        version:         0.09
+        version:         0.10
     Tie::Array::DBD:
         file:            lib/Tie/Array/DBD.pm
-        version:         0.09
+        version:         0.10
 requires:     
     perl:                5.008
     Carp:                0

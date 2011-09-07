@@ -14,7 +14,7 @@
       },
    "distribution_type" : "module",
    "generated_by" : "Author",
-   "version" : "0.09",
+   "version" : "0.10",
    "name" : "Tie-Hash-DBD",
    "author" : [
       "H.Merijn Brand <h.m.brand@xs4all.nl>"
@@ -22,11 +22,11 @@
    "license" : "perl",
    "provides" : {
       "Tie::Array::DBD" : {
-         "version" : "0.09",
+         "version" : "0.10",
          "file" : "lib/Tie/Array/DBD.pm"
          },
       "Tie::Hash::DBD" : {
-         "version" : "0.09",
+         "version" : "0.10",
          "file" : "lib/Tie/Hash/DBD.pm"
          }
       },

@@ -8,7 +8,8 @@ use strict;
 use ExtUtils::MakeMaker;
 
 my %wm = (
-    NAME         => "Tie-Hash-DBD",
+    NAME         => "Tie::Hash::DBD",
+    DISTNAME     => "Tie-Hash-DBD",
     ABSTRACT     => "Tie a hash to a database",
     AUTHOR       => "H.Merijn Brand <h.m.brand\@xs4all.nl>",
     LICENSE	 => "perl",
