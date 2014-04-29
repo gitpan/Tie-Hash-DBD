@@ -1,38 +1,37 @@
---- #YAML:1.0
-name:                    Tie-Hash-DBD
-version:                 0.10
-abstract:                Tie plain hashes to DBI interface
-license:                 perl
-author:              
-    - H.Merijn Brand <h.m.brand@xs4all.nl>
-generated_by:            Author
-distribution_type:       module
-provides:
-    Tie::Hash::DBD:
-        file:            lib/Tie/Hash/DBD.pm
-        version:         0.10
-    Tie::Array::DBD:
-        file:            lib/Tie/Array/DBD.pm
-        version:         0.10
-requires:     
-    perl:                5.008
-    Carp:                0
-    DBI:                 1.613
-    Storable:            0
-configure_requires:
-    ExtUtils::MakeMaker: 0
-test_requires:
-    Test::Harness:       0
-    Test::More:          0.90
-    Time::HiRes:         0
-recommends:     
-    perl:                5.014001
-    DBI:                 1.616
-    DBD::SQLite:         1.33
-    Test::More:          0.98
-resources:
-    license:             http://dev.perl.org/licenses/
-    repository:          http://repo.or.cz/w/Tie-Hash-DBD.git
-meta-spec:
-    version:             1.4
-    url:                 http://module-build.sourceforge.net/META-spec-v1.4.html
+--- 
+abstract: Tie plain hashes to DBI interface
+author: 
+  - H.Merijn Brand <h.m.brand@xs4all.nl>
+configure_requires: 
+  ExtUtils::MakeMaker: 0
+dynamic_config: 1
+generated_by: Author, CPAN::Meta::Converter version 2.141170
+license: perl
+meta-spec: 
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Tie-Hash-DBD
+provides: 
+  Tie::Array::DBD: 
+    file: lib/Tie/Array/DBD.pm
+    version: '0.11'
+  Tie::Hash::DBD: 
+    file: lib/Tie/Hash/DBD.pm
+    version: '0.11'
+recommends: 
+  DBD::SQLite: '1.42'
+  DBI: '1.631'
+  Test::More: '1.001003'
+  perl: '5.018002'
+requires: 
+  Carp: 0
+  DBI: '1.613'
+  Storable: 0
+  Test::Harness: 0
+  Test::More: '0.90'
+  Time::HiRes: 0
+  perl: '5.008'
+resources: 
+  license: http://dev.perl.org/licenses/
+  repository: http://repo.or.cz/r/Tie-Hash-DBD.git
+version: '0.11'

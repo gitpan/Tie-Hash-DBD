@@ -1,6 +1,6 @@
 package Tie::Array::DBD;
 
-our $VERSION = "0.10";
+our $VERSION = "0.11";
 
 use strict;
 use warnings;
@@ -52,6 +52,12 @@ my %DB = (
 	temp	=> "temporary",
 	t_key	=> "integer not null primary key",
 	t_val	=> "text",
+	clear	=> "delete from",
+	},
+    Firebird	=> {
+	temp	=> "",
+	t_key	=> "integer not null primary key",
+	t_val	=> "varchar (8192)",
 	clear	=> "delete from",
 	},
     );
@@ -437,7 +443,7 @@ __END__
 
 =head1 NAME
 
-Tie::Array::DBD, tie a plain array to a database table
+Tie::Array::DBD - tie a plain array to a database table
 
 =head1 SYNOPSIS
 
@@ -625,7 +631,7 @@ H.Merijn Brand <h.m.brand@xs4all.nl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010-2011 H.Merijn Brand
+Copyright (C) 2010-2014 H.Merijn Brand
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 

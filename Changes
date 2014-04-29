@@ -1,52 +1,47 @@
-Revision history for Tie::DBD
+0.11	- 29 Apr 2014, H.Merijn Brand
+    * Up copyright to 2012
+    * Up copyright to 2013
+    * Fix some META issues
+    * Up copyright to 2014
+    * Add support for Firebird (not fully functional)
 
-0.10	07 Sep 2011 - H.Merijn Brand
+0.10	- 07 Sep 2011, H.Merijn Brand
+    * NAME / DISTNAME in Makefile.PL
 
-    - NAME / DISTNAME in Makefile.PL
+0.09	- 07 Sep 2011, H.Merijn Brand
+    * Up copyright to 2011
+    * More cross-checks for META data
 
-0.09	07 Sep 2011 - H.Merijn Brand
+0.08	- 25 Jan 2011, H.Merijn Brand
+    * Use Storable's nfreeze () instead of freeze ()
+    * Add transaction support in Tie::Hash::DBD
 
-    - Up copyright to 2011
-    - More cross-checks for META data
+0.07	- 06 Sep 2010, H.Merijn Brand
+    * More tests
+    * Implementation of Tie::Array::DBD
 
-0.08	25 Jan 2011 - H.Merijn Brand
+0.06	- 10 Aug 2010, H.Merijn Brand
+    * Shorten skip messages for failing DBD's
+    * Small fixes from CPANTESTERS
 
-    - Use Storable's nfreeze () instead of freeze ()
-    - Add transaction support in Tie::Hash::DBD
+0.05	- 10 Aug 2010, H.Merijn Brand
+    * More speed
+    * Make Unify work
 
-0.07	06 Sep 2010 - H.Merijn Brand
+0.04	- 09 Aug 2010, H.Merijn Brand
+    * Documentation
+    * Raise Oracle BLOB read length
+    * Implement and test persistence
 
-    - More tests
-    - Implementation of Tie::Array::DBD
+0.03	- 09 Aug 2010, H.Merijn Brand
+    * Documentation
+    * Make Oracle work (with restrictions)
+    * Implement streaming (persistence)
 
-0.06	10 Aug 2010 - H.Merijn Brand
+0.02	- 05 Aug 2010, H.Merijn Brand
+    * Documentation
+    * More database support
+    * Tests for each database
 
-    - Shorten skip messages for failing DBD's
-    - Small fixes from CPANTESTERS
-
-0.05	10 Aug 2010 - H.Merijn Brand
-
-    - More speed
-    - Make Unify work
-
-0.04	09 Aug 2010 - H.Merijn Brand
-
-    - Documentation
-    - Raise Oracle BLOB read length
-    - Implement and test persistence
-
-0.03	09 Aug 2010 - H.Merijn Brand
-
-    - Documentation
-    - Make Oracle work (with restrictions)
-    - Implement streaming (persistence)
-
-0.02	05 Aug 2010 - H.Merijn Brand
-
-    - Documentation
-    - More database support
-    - Tests for each database
-
-0.01	04 Aug 2010 - H.Merijn Brand
-
-    - Initial release
+0.01	- 04 Aug 2010, H.Merijn Brand
+    * Initial release

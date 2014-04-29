@@ -4,6 +4,7 @@ Makefile.PL
 lib/Tie/Array/DBD.pm
 lib/Tie/Hash/DBD.pm
 README
+examples/copy.pl
 t/00_pod.t
 t/01_pod.t
 t/10_load.t
@@ -41,7 +42,12 @@ t/71_bulk.t
 t/72_stream.t
 t/73_persist.t
 t/75_Unify.t
+t/80_Firebird.t
+t/81_bulk.t
+t/82_stream.t
+t/83_persist.t
+t/85_Firebird.t
+t/86_autoc.t
 t/util.pl
-examples/copy.pl
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)

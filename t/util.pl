@@ -35,6 +35,12 @@ sub _dsn
 	    plan skip_all => "Not a testable Unify env";
 	return "dbi:Unify:";
 	}
+
+    if ($type eq "Firebird") {
+	$ENV{DBI_USER} = "merijn";
+	$ENV{DBI_PASS} = "";
+	return "dbi:Firebird:db=merijn";
+	}
     } # _dsn
 
 sub dsn
@@ -53,6 +59,7 @@ sub cleanup
     $type eq "Oracle"	and return;
     $type eq "mysql"	and return;
     $type eq "Unify"	and return;
+    $type eq "Firebird"	and return;
 
     if ($type eq "SQLite") {
 	unlink $_ for glob "db.3*";
