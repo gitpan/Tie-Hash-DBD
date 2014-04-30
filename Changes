@@ -1,3 +1,8 @@
+0.12	- 30 Apr 2014, H.Merijn Brand
+    * Amend tests to not fail when not an error
+    * Amend tests to show driver version
+    * Skip Firebird tests unless local or ISC_USER is set
+
 0.11	- 29 Apr 2014, H.Merijn Brand
     * Up copyright to 2012
     * Up copyright to 2013

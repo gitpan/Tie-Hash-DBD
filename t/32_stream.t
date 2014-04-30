@@ -16,6 +16,7 @@ eval { tie %hash, "Tie::Hash::DBD", dsn ($DBD), { str => "Storable" } };
 unless (tied %hash) {
     my $reason = DBI->errstr;
     $reason or ($reason = $@) =~ s/:.*//s;
+    $reason =~ s{: No such file or directory(\n.*)?$}{}s;
     $reason and substr $reason, 0, 0, " - ";
     plan skip_all => "DBD::$DBD$reason";
     }

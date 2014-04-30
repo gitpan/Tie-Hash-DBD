@@ -37,9 +37,12 @@ sub _dsn
 	}
 
     if ($type eq "Firebird") {
-	$ENV{DBI_USER} = "merijn";
-	$ENV{DBI_PASS} = "";
-	return "dbi:Firebird:db=merijn";
+	my $user = $ENV{LOGNAME} || scalar getpwuid $<;
+	$ENV{ISC_USER} || $user eq "merijn" or
+	    plan skip_all => "Firebird has no reproducible test yet";
+	$ENV{DBI_USER} = $ENV{ISC_USER}     || $user;
+	$ENV{DBI_PASS} = $ENV{ISC_PASSWORD} || "";
+	return "dbi:Firebird:db=$user";
 	}
     } # _dsn
 

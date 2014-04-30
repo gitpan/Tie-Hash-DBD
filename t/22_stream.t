@@ -72,6 +72,7 @@ my %deep = (
 #   RX  => qr{^re[gG]e?x},
 #   FMT => *{$::{STDOUT}}{FORMAT},
     );
+$^O eq "MSWin32" and delete $hash{RV};
 
 ok ($hash{deep} = { %deep },				"Deep structure");
 

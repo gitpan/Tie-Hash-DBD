@@ -32,11 +32,11 @@ foreach my $size (10, 100, 1000) {
 
     my $t0 = [ gettimeofday ];
     ok (%hash = %plain,		"Assign hash $s_size elements");
-    my $elapsed = tv_interval ($t0);
+    my $elapsed = tv_interval ($t0) || 0.000001;
     note (sprintf "Write %.3f recs/sec", $s_size / $elapsed);
     $t0 = [ gettimeofday ];
     is_deeply (\%hash, \%plain,	"Content $s_size");
-    $elapsed = tv_interval ($t0);
+    $elapsed    = tv_interval ($t0) || 0.000001;
     note (sprintf "Read  %.3f recs/sec", $s_size / $elapsed);
     }
 
