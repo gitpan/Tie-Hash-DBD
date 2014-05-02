@@ -9,19 +9,13 @@ use Tie::Array::DBD;
 require "t/util.pl";
 
 my @array;
-my $DBD = "Pg";
+my $DBD = "mysql";
 cleanup ($DBD);
 eval { tie @array, "Tie::Array::DBD", dsn ($DBD) };
 
-unless (tied @array) {
-    my $reason = DBI->errstr;
-    $reason or ($reason = $@) =~ s/:.*//s;
-    $reason =~ s{: No such file or directory(\n.*)?$}{}s;
-    $reason and substr $reason, 0, 0, " - ";
-    plan skip_all => "DBD::$DBD$reason";
-    }
+tied @array or plan_fail ($DBD);
 
-ok (tied @array,						"Array tied");
+ok (tied @array,					"Array tied");
 
 # insert
 ok ($array[1] = 1,					"1 =  1");

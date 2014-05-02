@@ -1,68 +1,68 @@
 {
-   "license" : [
-      "perl_5"
-   ],
-   "resources" : {
-      "license" : [
-         "http://dev.perl.org/licenses/"
-      ],
-      "repository" : {
-         "type" : "git",
-         "web" : "http://repo.or.cz/w/Tie-Hash-DBD.git",
-         "url" : "http://repo.or.cz/r/Tie-Hash-DBD.git"
-      }
-   },
-   "dynamic_config" : 1,
-   "provides" : {
-      "Tie::Array::DBD" : {
-         "file" : "lib/Tie/Array/DBD.pm",
-         "version" : "0.12"
-      },
-      "Tie::Hash::DBD" : {
-         "version" : "0.12",
-         "file" : "lib/Tie/Hash/DBD.pm"
-      }
-   },
    "generated_by" : "Author",
+   "dynamic_config" : 1,
+   "name" : "Tie-Hash-DBD",
    "author" : [
       "H.Merijn Brand <h.m.brand@xs4all.nl>"
    ],
-   "release_status" : "stable",
-   "prereqs" : {
-      "runtime" : {
-         "requires" : {
-            "Carp" : "0",
-            "Storable" : "0",
-            "DBI" : "1.613",
-            "perl" : "5.008"
-         },
-         "recommends" : {
-            "DBI" : "1.631",
-            "perl" : "5.018002",
-            "DBD::SQLite" : "1.42"
-         }
+   "meta-spec" : {
+      "version" : "2",
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec"
+   },
+   "abstract" : "Tie plain hashes to DBI interface",
+   "license" : [
+      "perl_5"
+   ],
+   "provides" : {
+      "Tie::Array::DBD" : {
+         "version" : "0.13",
+         "file" : "lib/Tie/Array/DBD.pm"
       },
+      "Tie::Hash::DBD" : {
+         "file" : "lib/Tie/Hash/DBD.pm",
+         "version" : "0.13"
+      }
+   },
+   "version" : "0.13",
+   "prereqs" : {
       "configure" : {
          "requires" : {
             "ExtUtils::MakeMaker" : "0"
          }
       },
+      "runtime" : {
+         "requires" : {
+            "DBI" : "1.613",
+            "Storable" : "0",
+            "Carp" : "0",
+            "perl" : "5.008003"
+         },
+         "recommends" : {
+            "DBD::SQLite" : "1.42",
+            "DBI" : "1.631",
+            "perl" : "5.018002"
+         }
+      },
       "test" : {
          "requires" : {
-            "Test::Harness" : "0",
             "Test::More" : "0.90",
-            "Time::HiRes" : "0"
+            "Time::HiRes" : "0",
+            "Test::Harness" : "0"
          },
          "recommends" : {
             "Test::More" : "1.001003"
          }
       }
    },
-   "version" : "0.12",
-   "abstract" : "Tie plain hashes to DBI interface",
-   "name" : "Tie-Hash-DBD",
-   "meta-spec" : {
-      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "web" : "http://repo.or.cz/w/Tie-Hash-DBD.git",
+         "type" : "git",
+         "url" : "http://repo.or.cz/r/Tie-Hash-DBD.git"
+      }
    }
 }

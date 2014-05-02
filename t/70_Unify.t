@@ -13,15 +13,9 @@ my $DBD = "Unify";
 cleanup ($DBD);
 eval { tie %hash, "Tie::Hash::DBD", dsn ($DBD) };
 
-if (tied %hash) {
-    diag "Using DBD::$DBD-", "DBD::$DBD"->VERSION, "\n";
-    }
-else {
-    my $reason = DBI->errstr;
-    $reason or ($reason = $@) =~ s/:.*//s;
-    $reason and substr $reason, 0, 0, " - ";
-    plan skip_all => "DBD::$DBD$reason";
-    }
+tied %hash or plan_fail ($DBD);
+
+diag "Using DBD::$DBD-", "DBD::$DBD"->VERSION, "\n";
 
 ok (tied %hash,						"Hash tied");
 

@@ -1,3 +1,13 @@
+0.13	- 02 May 2014, H.Merijn Brand
+    * Shorten connect failure messages in test
+    * Only skip SQLite/RV test if mismatch under Windows (Storable's fault)
+    * Do not use getpwuid on Windows
+    * Rename the test files for Tie::Array::DBD
+    * Skip the slow bulk tests on Firebird for now
+    * Document that deep changes are not working
+    * Require perl-5.8.3
+    * Ignore unsupported streamers by just returning the data (was undef)
+
 0.12	- 30 Apr 2014, H.Merijn Brand
     * Amend tests to not fail when not an error
     * Amend tests to show driver version

@@ -13,12 +13,7 @@ my $DBD = "SQLite";
 cleanup ($DBD);
 eval { tie %hash, "Tie::Hash::DBD", dsn ($DBD), { str => "Storable" } };
 
-unless (tied %hash) {
-    my $reason = DBI->errstr;
-    $reason or ($reason = $@) =~ s/:.*//s;
-    $reason and substr $reason, 0, 0, " - ";
-    plan skip_all => "DBD::$DBD$reason";
-    }
+tied %hash or plan_fail ($DBD);
 
 ok (tied %hash,						"Hash tied");
 
@@ -61,7 +56,7 @@ my %deep = (
     PV  => "string",
     PV8 => "ab\ncd\x{20ac}\t",
     PVM => $!,
-    RV  => \$.,
+    RV  => \$DBD,
     AR  => [ 1..2 ],
     HR  => { key => "value" },
     OBJ => ( bless { auto_diag => 1 }, "Text::CSV_XS" ),
@@ -72,11 +67,16 @@ my %deep = (
 #   RX  => qr{^re[gG]e?x},
 #   FMT => *{$::{STDOUT}}{FORMAT},
     );
-$^O eq "MSWin32" and delete $hash{RV};
 
 ok ($hash{deep} = { %deep },				"Deep structure");
 
-is_deeply ($hash{deep}, \%deep,				"Content");
+my %got = %{$hash{deep}};
+
+if ($^O eq "MSWin32" && $deep{RV} != $got{RV}) {
+    delete $deep{RV};
+    delete $got{RV};
+    }
+is_deeply (\%got, \%deep,				"Content");
 
 # clear
 %hash = ();

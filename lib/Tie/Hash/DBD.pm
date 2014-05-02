@@ -1,6 +1,6 @@
 package Tie::Hash::DBD;
 
-our $VERSION = "0.12";
+our $VERSION = "0.13";
 
 use strict;
 use warnings;
@@ -189,6 +189,7 @@ sub _stream
     $self->{str} or return $val;
 
     $self->{str} eq "Storable" and return nfreeze ({ val => $val });
+    return $val;
     } # _stream
 
 sub _unstream
@@ -198,6 +199,7 @@ sub _unstream
     $self->{str} or return $val;
 
     $self->{str} eq "Storable" and return thaw ($val)->{val};
+    return $val;
     } # _unstream
 
 sub STORE
@@ -402,7 +404,7 @@ be dropped.
 
 If a table name is provided, it will be checked for existence. If found,
 it will be used with the specified C<key> and C<fld>.  Otherwise it will
-be created with C<key> and <fld>,  but it will not be dropped at the end
+be created with C<key> and C<fld>, but it will not be dropped at the end
 of the session.
 
 If a table name is provided, C<AutoCommit> will be "On" for persistence,
@@ -421,13 +423,17 @@ is C<h_value>.
 =item str
 
 Defines the required persistence module. Currently only supports the use
-of C<Storable>. The default is undefined.
+of C<Storable>.  The default is undefined.  Passing unsupported streamer
+module names will be silently ignored.
 
 Note that C<Storable> does not support persistence of perl types C<CODE>, 
 C<REGEXP>, C<IO>, C<FORMAT>, and C<GLOB>.
 
 If you want to preserve Encoding on the hash values, you should use this
 feature.
+
+Also note that this module does not yet support dynamic deep structures.
+See L</Nesting and deep structues>.
 
 =item trh
 
@@ -457,6 +463,8 @@ all structure is lost when the data is stored and not available when the
 data is restored. To maintain deep structures, use the streamer option:
 
   tie my %hash, "Tie::Hash::DBD", { str => "Storable" };
+
+Note that changes inside deep structures do not work. See L</TODO>.
 
 =head1 METHODS
 
@@ -515,6 +523,20 @@ can it be the subject of a (unique) index, hence large sets will be slow
 
 =over 2
 
+=item Update on deep changes
+
+Currently,  nested structures do not get updated when it is an change in
+a deeper part.
+
+  tie my %hash, "Tie::Hash::DBD", $dbh, { str => "Storable" };
+
+  $hash{deep} = {
+      int  => 1,
+      str  => "foo",
+      };
+
+  $hash{deep}{int}++; # No effect :(
+
 =item Documentation
 
 Better document what the implications are of storing  I<data> content in
@@ -540,7 +562,7 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-DBI, Tie::DBI, Tie::Hash, Tie::Array::DBD, Redis::Hash
+DBI, Tie::DBI, Tie::Hash, Tie::Array::DBD, Redis::Hash, DBM::Deep
 
 =cut
 

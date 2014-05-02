@@ -14,13 +14,7 @@ my $DBD = "Pg";
 cleanup ($DBD);
 eval { tie %hash, "Tie::Hash::DBD", dsn ($DBD) };
 
-unless (tied %hash) {
-    my $reason = DBI->errstr;
-    $reason or ($reason = $@) =~ s/:.*//s;
-    $reason =~ s{: No such file or directory(\n.*)?$}{}s;
-    $reason and substr $reason, 0, 0, " - ";
-    plan skip_all => "DBD::$DBD$reason";
-    }
+tied %hash or plan_fail ($DBD);
 
 ok (tied %hash,			"Hash tied");
 

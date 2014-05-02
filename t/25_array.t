@@ -9,18 +9,13 @@ use Tie::Array::DBD;
 require "t/util.pl";
 
 my @array;
-my $DBD = "Firebird";
+my $DBD = "SQLite";
 cleanup ($DBD);
 eval { tie @array, "Tie::Array::DBD", dsn ($DBD) };
 
-unless (tied @array) {
-    my $reason = DBI->errstr;
-    $reason or ($reason = $@) =~ s/:.*//s;
-    $reason and substr $reason, 0, 0, " - ";
-    plan skip_all => "DBD::$DBD$reason";
-    }
+tied @array or plan_fail ($DBD);
 
-ok (tied @array,						"Array tied");
+ok (tied @array,					"Array tied");
 
 # insert
 ok ($array[1] = 1,					"1 =  1");
@@ -137,6 +132,15 @@ is_deeply ([splice (@array, 2, 2, 3, 2)],	[2,3],	"splice \@array, off, len, ..")
 is_deeply (\@array, [0..1,3,2,4..9],			".. leftover");
 is_deeply ([splice (@array, 4, -2, 25)],	[4..7],	"splice \@array, off, -len");
 is_deeply (\@array, [0,1,3,2,25,8,9],			".. leftover");
+
+untie @array;
+cleanup ($DBD);
+
+eval { tie @array, "Tie::Array::DBD", dsn ($DBD), { str => "Storable" }};
+ok (@array = ([ 1, 2 ]),				"Set AOA");
+is_deeply (\@array, [[ 1, 2 ]],				"AOA");
+#ok ($array[0][1] = 1,					"Set element");
+#is ($array[0][1], 1,					"Get element");
 
 untie @array;
 cleanup ($DBD);

@@ -14,16 +14,11 @@ my $DBD = "Firebird";
 cleanup ($DBD);
 eval { tie %hash, "Tie::Hash::DBD", dsn ($DBD) };
 
-unless (tied %hash) {
-    my $reason = DBI->errstr;
-    $reason or ($reason = $@) =~ s/:.*//s;
-    $reason and substr $reason, 0, 0, " - ";
-    plan skip_all => "DBD::$DBD$reason";
-    }
+tied %hash or plan_fail ($DBD);
 
 ok (tied %hash,			"Hash tied");
 
-foreach my $size (10, 100, 1000) {
+foreach my $size (10) { # Too slow for now. Maybe later, 100, 1000) {
     my %plain = map { ( $_ => $_ ) }
 		map { ( $_, pack "l", $_ ) }
 		-($size - 1) .. $size;
